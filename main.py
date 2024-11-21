@@ -1,12 +1,16 @@
 import telebot
 import os
 from instaloader import Instaloader, Post
+from dotenv import load_dotenv
 
-# Replace with your Bot Token
-BOT_TOKEN = "your_bot_token_here"
+# Load environment variables from .env file
+load_dotenv()
+
+# Get the bot token from environment variables
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+
+# Initialize the bot and Instaloader
 bot = telebot.TeleBot(BOT_TOKEN)
-
-# Initialize Instaloader
 loader = Instaloader()
 
 # Start Command
