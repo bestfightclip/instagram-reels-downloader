@@ -2,16 +2,24 @@ import telebot
 import os
 from instaloader import Instaloader, Post
 from dotenv import load_dotenv
+import requests
 
-# Load environment variables from .env file
+# Load environment variables
 load_dotenv()
 
-# Get the bot token from environment variables
+# Get the bot token from the .env file
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 # Initialize the bot and Instaloader
 bot = telebot.TeleBot(BOT_TOKEN)
 loader = Instaloader()
+
+# Optional: Load Instagram session for authenticated access
+# Replace 'your_username' with your Instagram username
+try:
+    loader.load_session_from_file("your_username")
+except FileNotFoundError:
+    print("No Instagram session file found. You may face limitations when accessing some videos.")
 
 # Start Command
 @bot.message_handler(commands=['start'])
@@ -77,16 +85,27 @@ def download_reel(message):
         if post.is_video:
             video_url = post.video_url
 
-            # Download video temporarily
-            video_file = f"{shortcode}.mp4"
-            os.system(f"wget -O {video_file} {video_url}")
+            # Spoof browser headers to bypass 403 error
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
+            }
+            response = requests.get(video_url, headers=headers, stream=True)
 
-            # Send the video back to the user
-            with open(video_file, "rb") as video:
-                bot.send_video(message.chat.id, video, caption="🎬 Here’s your Reel! Enjoy! 🌟")
+            if response.status_code == 200:
+                # Save the video temporarily
+                video_file = f"{shortcode}.mp4"
+                with open(video_file, "wb") as file:
+                    for chunk in response.iter_content(chunk_size=8192):
+                        file.write(chunk)
 
-            # Clean up
-            os.remove(video_file)
+                # Send the video back to the user
+                with open(video_file, "rb") as video:
+                    bot.send_video(message.chat.id, video, caption="🎬 Here’s your Reel! Enjoy! 🌟")
+
+                # Clean up
+                os.remove(video_file)
+            else:
+                bot.reply_to(message, "⚠️ Failed to download the video. Instagram may be blocking the request. 🛠️")
         else:
             bot.reply_to(message, "⚠️ This link does not lead to a video Reel. 🧐", parse_mode="Markdown")
     except Exception as e:
