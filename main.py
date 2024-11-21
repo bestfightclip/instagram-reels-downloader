@@ -15,9 +15,8 @@ bot = telebot.TeleBot(BOT_TOKEN)
 loader = Instaloader()
 
 # Optional: Load Instagram session for authenticated access
-# Replace 'your_username' with your Instagram username
 try:
-    loader.load_session_from_file("your_username")
+    loader.load_session_from_file("your_username")  # Replace with your Instagram username
 except FileNotFoundError:
     print("No Instagram session file found. You may face limitations when accessing some videos.")
 
@@ -98,7 +97,7 @@ def download_reel(message):
                     for chunk in response.iter_content(chunk_size=8192):
                         file.write(chunk)
 
-                # Send the video back to the user
+                # Send the video back to the user without any changes
                 with open(video_file, "rb") as video:
                     bot.send_video(message.chat.id, video, caption="🎬 Here’s your Reel! Enjoy! 🌟")
 
