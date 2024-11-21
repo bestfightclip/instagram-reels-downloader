@@ -40,20 +40,16 @@ def login_to_instagram():
         # Ensure the session file is in the current working directory
         session_filename = f"session-{INSTAGRAM_USERNAME}"
         session_path = os.path.abspath(session_filename)
-        working_dir = os.path.dirname(session_path)
-        
-        # Change to the correct directory
-        os.chdir(working_dir)
-        
-        # Debugging: Print current directory and files
+
+        # Debugging: Print session path and working directory
+        print(f"📂 Session path: {session_path}")
         print(f"📂 Current working directory: {os.getcwd()}")
-        print(f"📄 Files in directory: {os.listdir('.')}")
-        
+
         # Load the session
         insta_loader.load_session_from_file(INSTAGRAM_USERNAME)
         print("✅ Successfully loaded Instagram session.")
     except FileNotFoundError:
-        print(f"❌ Session file not found in {os.getcwd()}. Ensure 'session.txt' is deployed.")
+        print(f"❌ Session file not found at {session_path}. Ensure 'session.txt' is deployed correctly.")
         exit(1)
     except Exception as e:
         print(f"⚠️ Failed to load session: {e}")
