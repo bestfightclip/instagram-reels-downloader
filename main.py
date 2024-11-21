@@ -55,7 +55,7 @@ def login_to_instagram():
         print(f"⚠️ Failed to load session: {e}")
         exit(1)
 
-def scrape_videos(hashtag, limit=5):
+async def scrape_videos(hashtag, limit=5):
     """
     Scrapes up to 'limit' video URLs from Instagram for a given hashtag.
     """
@@ -72,34 +72,34 @@ def scrape_videos(hashtag, limit=5):
         print(f"⚠️ Error while scraping videos: {e}")
     return videos
 
-def search_instagram(update: Update, context: CallbackContext):
+async def search_instagram(update: Update, context: CallbackContext):
     """
     Handles the /search command to fetch Instagram videos for a hashtag.
     """
     if not context.args:
-        update.message.reply_text("❓ Usage: /search <hashtag> [limit]\nExample: /search travel 5")
+        await update.message.reply_text("❓ Usage: /search <hashtag> [limit]\nExample: /search travel 5")
         return
 
     hashtag = context.args[0]
     limit = int(context.args[1]) if len(context.args) > 1 else 5
-    update.message.reply_text(f"🔍 Searching Instagram for up to {limit} videos with **#{hashtag}**...\nPlease wait! ⏳")
+    await update.message.reply_text(f"🔍 Searching Instagram for up to {limit} videos with **#{hashtag}**...\nPlease wait! ⏳")
 
-    videos = scrape_videos(hashtag, limit)
+    videos = await scrape_videos(hashtag, limit)
     if not videos:
-        update.message.reply_text(f"❌ No videos found for **#{hashtag}** or Instagram blocked access!")
+        await update.message.reply_text(f"❌ No videos found for **#{hashtag}** or Instagram blocked access!")
         return
 
-    update.message.reply_text(f"✅ Found **{len(videos)} video(s)** for **#{hashtag}**. Preparing to send... 📦")
+    await update.message.reply_text(f"✅ Found **{len(videos)} video(s)** for **#{hashtag}**. Preparing to send... 📦")
 
     for i, video_url in enumerate(videos, start=1):
         try:
-            update.message.reply_text(f"📥 **Downloading video {i}...**")
-            update.message.reply_video(video=video_url, caption=f"🎥 **Video {i} from #{hashtag}**")
-            update.message.reply_text(f"✅ **Video {i} sent successfully!** 🎉")
+            await update.message.reply_text(f"📥 **Downloading video {i}...**")
+            await update.message.reply_video(video=video_url, caption=f"🎥 **Video {i} from #{hashtag}**")
+            await update.message.reply_text(f"✅ **Video {i} sent successfully!** 🎉")
         except Exception as e:
-            update.message.reply_text(f"⚠️ Error sending video {i}: {e}")
+            await update.message.reply_text(f"⚠️ Error sending video {i}: {e}")
 
-    update.message.reply_text("🚀 All videos sent! Use /search <hashtag> to find more. 🌟")
+    await update.message.reply_text("🚀 All videos sent! Use /search <hashtag> to find more. 🌟")
 
 def main():
     """
