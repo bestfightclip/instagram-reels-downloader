@@ -61,15 +61,22 @@ async def scrape_videos(hashtag, limit=5):
     """
     videos = []
     try:
+        # Attempt to fetch posts for the hashtag
         hashtag_posts = instaloader.Hashtag.from_name(insta_loader.context, hashtag).get_posts()
+        
         for post in hashtag_posts:
             if post.is_video:
                 videos.append(post.video_url)
                 if len(videos) >= limit:
                     break
             time.sleep(2)  # Delay to prevent rate-limiting
+            
+    except instaloader.exceptions.QueryReturnedNotFoundException:
+        # Handle the 404 error when Instagram API doesn't return data for a hashtag
+        print(f"⚠️ Hashtag {hashtag} not found or blocked by Instagram.")
     except Exception as e:
-        print(f"⚠️ Error while scraping videos: {e}")
+        print(f"⚠️ Error while scraping videos for hashtag {hashtag}: {e}")
+    
     return videos
 
 async def search_instagram(update: Update, context: CallbackContext):
@@ -101,6 +108,18 @@ async def search_instagram(update: Update, context: CallbackContext):
 
     await update.message.reply_text("🚀 All videos sent! Use /search <hashtag> to find more. 🌟")
 
+async def help_command(update: Update, context: CallbackContext):
+    """Handles the /help command."""
+    await update.message.reply_text(
+        "🆘 Here's a list of available commands:\n\n"
+        "/search <hashtag> [limit] - Find Instagram videos for a hashtag\n"
+        "/help - Show this help message"
+    )
+
+async def start_command(update: Update, context: CallbackContext):
+    """Handles the /start command."""
+    await update.message.reply_text("👋 Welcome to the Instagram Video Scraper bot! Use /search <hashtag> to get started.")
+
 def main():
     """
     Main function to run the Telegram bot.
@@ -111,8 +130,10 @@ def main():
 
     application = Application.builder().token(TELEGRAM_TOKEN).build()  # Updated for v20.x
 
-    # Register the /search command handler
+    # Register the /search, /help, and /start command handlers
     application.add_handler(CommandHandler("search", search_instagram))
+    application.add_handler(CommandHandler("help", help_command))
+    application.add_handler(CommandHandler("start", start_command))
 
     print("🤖 Bot is running... Press Ctrl+C to stop.")
     application.run_polling()
