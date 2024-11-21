@@ -61,13 +61,18 @@ async def scrape_by_keyword(keyword, limit=5):
     """
     videos = []
     try:
-        # Scraping all posts in a random hashtag
-        for post in insta_loader.get_posts_by_hashtag("dog"):  # Searching in a general hashtag, like "dog"
-            if keyword.lower() in post.caption.lower() and post.is_video:
-                videos.append(post.video_url)
-                if len(videos) >= limit:
-                    break
+        # Scraping posts by hashtag, checking if keyword appears in the caption
+        for hashtag in ["dog", "pets", "animals"]:  # Searching in general hashtags like "dog", "pets", etc.
+            hashtag_posts = instaloader.Hashtag.from_name(insta_loader.context, hashtag).get_posts()
+            for post in hashtag_posts:
+                if keyword.lower() in post.caption.lower() and post.is_video:
+                    videos.append(post.video_url)
+                    if len(videos) >= limit:
+                        break
+            if len(videos) >= limit:
+                break
             time.sleep(2)  # Delay to prevent rate-limiting
+            
     except Exception as e:
         print(f"⚠️ Error while scraping videos with keyword '{keyword}': {e}")
     return videos
