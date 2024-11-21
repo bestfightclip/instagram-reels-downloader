@@ -2,7 +2,7 @@ import os
 import base64
 import instaloader
 from telegram import Update
-from telegram.ext import Updater, CommandHandler, CallbackContext
+from telegram.ext import Application, CommandHandler, CallbackContext
 import time
 
 # Initialize Instaloader
@@ -37,7 +37,7 @@ def login_to_instagram():
     """
     prepare_session()
     try:
-        # Ensure the session file path is correct
+        # Ensure the session file is in the current working directory
         session_filename = f"session-{INSTAGRAM_USERNAME}"
         session_path = os.path.abspath(session_filename)
 
@@ -109,15 +109,13 @@ def main():
 
     login_to_instagram()  # Log in to Instagram
 
-    updater = Updater(TELEGRAM_TOKEN)
-    dispatcher = updater.dispatcher
+    application = Application.builder().token(TELEGRAM_TOKEN).build()  # Updated for v20.x
 
     # Register the /search command handler
-    dispatcher.add_handler(CommandHandler("search", search_instagram))
+    application.add_handler(CommandHandler("search", search_instagram))
 
     print("🤖 Bot is running... Press Ctrl+C to stop.")
-    updater.start_polling()
-    updater.idle()
+    application.run_polling()
 
 if __name__ == "__main__":
     main()
