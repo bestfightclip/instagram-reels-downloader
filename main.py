@@ -83,7 +83,7 @@ def search_instagram(update: Update, context: CallbackContext):
 
 def main():
     """Main function to run the Telegram bot."""
-    TELEGRAM_TOKEN = "your_telegram_bot_token"  # Replace with your Telegram bot token
+    TELEGRAM_TOKEN = "7636008956:AAHjbBso-7kAw5tNtCL6wyJRer509Fr3CdQ"  # Your Telegram bot token
 
     login_to_instagram()  # Login to Instagram
 
