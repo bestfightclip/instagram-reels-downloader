@@ -19,7 +19,7 @@ def decode_session_file():
             encoded_data = encoded_file.read()
         with open(session_filename, "wb") as session_file:
             session_file.write(base64.b64decode(encoded_data))
-        print(f"✅ Decoded session file: {session_filename}")
+        print(f"✅ Decoded session file: {os.path.abspath(session_filename)}")
     except Exception as e:
         print(f"⚠️ Failed to decode session file: {e}")
         exit(1)
@@ -28,7 +28,9 @@ def login_to_instagram():
     """Log in to Instagram using a saved session."""
     decode_session_file()  # Decode session.txt to binary session file
     try:
-        insta_loader.load_session_from_file(INSTAGRAM_USERNAME)
+        session_path = os.path.abspath(f"session-{INSTAGRAM_USERNAME}")
+        print(f"📂 Loading session from: {session_path}")
+        insta_loader.context.load_session_from_file(INSTAGRAM_USERNAME, filename=session_path)
         print("✅ Successfully loaded Instagram session.")
     except FileNotFoundError:
         print(f"❌ Session file not found. Please regenerate it using `generate_and_encode_session.py`.")
