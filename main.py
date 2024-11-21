@@ -1,4 +1,5 @@
 import os
+import time
 import instaloader
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, CallbackContext
@@ -6,23 +7,21 @@ from telegram.ext import Updater, CommandHandler, CallbackContext
 # Initialize Instaloader
 insta_loader = instaloader.Instaloader()
 
-# Use environment variables for credentials
-INSTAGRAM_USERNAME = os.getenv("INSTAGRAM_USERNAME")
-INSTAGRAM_PASSWORD = os.getenv("INSTAGRAM_PASSWORD")
+# Define Instagram username for session handling
+INSTAGRAM_USERNAME = "your_instagram_username"  # Replace with your username
 
-# Login function with session support
 def login_to_instagram():
-    """Log in to Instagram, using a saved session if available."""
+    """Log in to Instagram using a saved session if available."""
     try:
-        # Attempt to load an existing session
+        # Attempt to load the session from the file
         insta_loader.load_session_from_file(INSTAGRAM_USERNAME)
         print("✅ Successfully loaded Instagram session.")
     except FileNotFoundError:
-        # If no session exists, log in with credentials
-        print("🔑 No session found. Logging in with credentials...")
-        insta_loader.login(INSTAGRAM_USERNAME, INSTAGRAM_PASSWORD)
-        insta_loader.save_session_to_file()
-        print("✅ Logged in and saved session.")
+        print("❌ No session file found. Please generate one using the `generate_session.py` script.")
+        exit(1)
+    except Exception as e:
+        print(f"⚠️ Failed to load session: {e}")
+        exit(1)
 
 # Function to scrape videos by hashtag
 def scrape_videos(hashtag, limit=5):
@@ -35,6 +34,7 @@ def scrape_videos(hashtag, limit=5):
                 videos.append(post.video_url)
                 if len(videos) >= limit:
                     break
+            time.sleep(2)  # Add a delay between requests to prevent rate limits
     except Exception as e:
         print(f"⚠️ Error while scraping videos: {e}")
     return videos
@@ -67,9 +67,10 @@ def search_instagram(update: Update, context: CallbackContext):
 
     update.message.reply_text("🚀 All videos sent! Use /search <hashtag> to find more. 🌟")
 
+# Main function to run the Telegram bot
 def main():
     """Main function to run the Telegram bot."""
-    TELEGRAM_TOKEN = "7636008956:AAHjbBso-7kAw5tNtCL6wyJRer509Fr3CdQ"  # Bot token
+    TELEGRAM_TOKEN = "your_telegram_bot_token"  # Replace with your bot token
 
     # Login to Instagram
     login_to_instagram()
