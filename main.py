@@ -1,9 +1,9 @@
 import os
-import time
 import base64
 import instaloader
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, CallbackContext
+import time
 
 # Initialize Instaloader
 insta_loader = instaloader.Instaloader()
@@ -11,29 +11,32 @@ insta_loader = instaloader.Instaloader()
 # Define Instagram username
 INSTAGRAM_USERNAME = "Contextdogs"  # Replace with your Instagram username
 
-def decode_session_file():
-    """Decode the Base64 session file back to its binary format."""
+def prepare_session():
+    """Decode session.txt into session-Contextdogs if not already present."""
     session_filename = f"session-{INSTAGRAM_USERNAME}"
-    try:
-        with open("session.txt", "r") as encoded_file:
-            encoded_data = encoded_file.read()
-        with open(session_filename, "wb") as session_file:
-            session_file.write(base64.b64decode(encoded_data))
-        print(f"✅ Decoded session file: {os.path.abspath(session_filename)}")
-    except Exception as e:
-        print(f"⚠️ Failed to decode session file: {e}")
-        exit(1)
+    if not os.path.exists(session_filename):
+        try:
+            print("🔄 Decoding session file from session.txt...")
+            with open("session.txt", "r") as encoded_file:
+                encoded_data = encoded_file.read()
+            with open(session_filename, "wb") as session_file:
+                session_file.write(base64.b64decode(encoded_data))
+            print(f"✅ Session file created: {session_filename}")
+        except Exception as e:
+            print(f"⚠️ Failed to prepare session file: {e}")
+            exit(1)
+    else:
+        print(f"✅ Session file already exists: {session_filename}")
 
 def login_to_instagram():
-    """Log in to Instagram using a saved session."""
-    decode_session_file()  # Decode session.txt to binary session file
+    """Log in to Instagram using the prepared session."""
+    prepare_session()
     try:
-        session_path = os.path.abspath(f"session-{INSTAGRAM_USERNAME}")
-        print(f"📂 Loading session from: {session_path}")
-        insta_loader.context.load_session_from_file(INSTAGRAM_USERNAME, filename=session_path)
+        # Load the session file
+        insta_loader.load_session_from_file(INSTAGRAM_USERNAME)
         print("✅ Successfully loaded Instagram session.")
     except FileNotFoundError:
-        print(f"❌ Session file not found. Please regenerate it using `generate_and_encode_session.py`.")
+        print(f"❌ Session file not found. Please ensure 'session.txt' is in the project directory.")
         exit(1)
     except Exception as e:
         print(f"⚠️ Failed to load session: {e}")
@@ -83,7 +86,7 @@ def search_instagram(update: Update, context: CallbackContext):
 
 def main():
     """Main function to run the Telegram bot."""
-    TELEGRAM_TOKEN = "7636008956:AAHjbBso-7kAw5tNtCL6wyJRer509Fr3CdQ"  # Your Telegram bot token
+    TELEGRAM_TOKEN = "7636008956:AAHjbBso-7kAw5tNtCL6wyJRer509Fr3CdQ"  # Replace with your Telegram bot token
 
     login_to_instagram()  # Login to Instagram
 
