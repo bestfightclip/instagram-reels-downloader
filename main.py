@@ -8,11 +8,14 @@ import time
 # Initialize Instaloader
 insta_loader = instaloader.Instaloader()
 
-# Define Instagram username
-INSTAGRAM_USERNAME = "Contextdogs"  # Replace with your Instagram username
+# Instagram username
+INSTAGRAM_USERNAME = "contexdogs"  # Your Instagram username
 
 def prepare_session():
-    """Decode session.txt into session-Contextdogs if not already present."""
+    """
+    Decodes session.txt into a binary session file (session-<username>)
+    if it doesn't already exist.
+    """
     session_filename = f"session-{INSTAGRAM_USERNAME}"
     if not os.path.exists(session_filename):
         try:
@@ -29,21 +32,29 @@ def prepare_session():
         print(f"✅ Session file already exists: {session_filename}")
 
 def login_to_instagram():
-    """Log in to Instagram using the prepared session."""
+    """
+    Logs in to Instagram using the decoded session file.
+    """
     prepare_session()
     try:
-        # Load the session file
+        # Ensure working directory consistency
+        session_path = os.path.abspath(f"session-{INSTAGRAM_USERNAME}")
+        os.chdir(os.path.dirname(session_path))
+        
+        # Load the session
         insta_loader.load_session_from_file(INSTAGRAM_USERNAME)
         print("✅ Successfully loaded Instagram session.")
     except FileNotFoundError:
-        print(f"❌ Session file not found. Please ensure 'session.txt' is in the project directory.")
+        print(f"❌ Session file not found. Ensure 'session.txt' is in the project directory.")
         exit(1)
     except Exception as e:
         print(f"⚠️ Failed to load session: {e}")
         exit(1)
 
 def scrape_videos(hashtag, limit=5):
-    """Scrape up to 'limit' video URLs for a given hashtag."""
+    """
+    Scrapes up to 'limit' video URLs from Instagram for a given hashtag.
+    """
     videos = []
     try:
         hashtag_posts = instaloader.Hashtag.from_name(insta_loader.context, hashtag).get_posts()
@@ -52,20 +63,22 @@ def scrape_videos(hashtag, limit=5):
                 videos.append(post.video_url)
                 if len(videos) >= limit:
                     break
-            time.sleep(2)  # Add a delay between requests to prevent rate limits
+            time.sleep(2)  # Delay to prevent rate-limiting
     except Exception as e:
         print(f"⚠️ Error while scraping videos: {e}")
     return videos
 
 def search_instagram(update: Update, context: CallbackContext):
-    """Handles the /search command to fetch Instagram videos."""
+    """
+    Handles the /search command to fetch Instagram videos for a hashtag.
+    """
     if not context.args:
         update.message.reply_text("❓ Usage: /search <hashtag> [limit]\nExample: /search travel 5")
         return
 
     hashtag = context.args[0]
     limit = int(context.args[1]) if len(context.args) > 1 else 5
-    update.message.reply_text(f"🔍 Searching Instagram for up to {limit} videos with **#{hashtag}**...\nPlease hold on! ⏳")
+    update.message.reply_text(f"🔍 Searching Instagram for up to {limit} videos with **#{hashtag}**...\nPlease wait! ⏳")
 
     videos = scrape_videos(hashtag, limit)
     if not videos:
@@ -85,14 +98,17 @@ def search_instagram(update: Update, context: CallbackContext):
     update.message.reply_text("🚀 All videos sent! Use /search <hashtag> to find more. 🌟")
 
 def main():
-    """Main function to run the Telegram bot."""
-    TELEGRAM_TOKEN = "7636008956:AAHjbBso-7kAw5tNtCL6wyJRer509Fr3CdQ"  # Replace with your Telegram bot token
+    """
+    Main function to run the Telegram bot.
+    """
+    TELEGRAM_TOKEN = "7636008956:AAHjbBso-7kAw5tNtCL6wyJRer509Fr3CdQ"  # Your Telegram bot token
 
-    login_to_instagram()  # Login to Instagram
+    login_to_instagram()  # Log in to Instagram
 
     updater = Updater(TELEGRAM_TOKEN)
     dispatcher = updater.dispatcher
 
+    # Register the /search command handler
     dispatcher.add_handler(CommandHandler("search", search_instagram))
 
     print("🤖 Bot is running... Press Ctrl+C to stop.")
