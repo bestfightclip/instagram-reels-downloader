@@ -24,12 +24,12 @@ def prepare_session():
                 encoded_data = encoded_file.read()
             with open(session_filename, "wb") as session_file:
                 session_file.write(base64.b64decode(encoded_data))
-            print(f"✅ Session file created: {session_filename}")
+            print(f"✅ Session file created: {os.path.abspath(session_filename)}")
         except Exception as e:
             print(f"⚠️ Failed to prepare session file: {e}")
             exit(1)
     else:
-        print(f"✅ Session file already exists: {session_filename}")
+        print(f"✅ Session file already exists: {os.path.abspath(session_filename)}")
 
 def login_to_instagram():
     """
@@ -37,15 +37,23 @@ def login_to_instagram():
     """
     prepare_session()
     try:
-        # Ensure working directory consistency
-        session_path = os.path.abspath(f"session-{INSTAGRAM_USERNAME}")
-        os.chdir(os.path.dirname(session_path))
+        # Ensure the session file is in the current working directory
+        session_filename = f"session-{INSTAGRAM_USERNAME}"
+        session_path = os.path.abspath(session_filename)
+        working_dir = os.path.dirname(session_path)
+        
+        # Change to the correct directory
+        os.chdir(working_dir)
+        
+        # Debugging: Print current directory and files
+        print(f"📂 Current working directory: {os.getcwd()}")
+        print(f"📄 Files in directory: {os.listdir('.')}")
         
         # Load the session
         insta_loader.load_session_from_file(INSTAGRAM_USERNAME)
         print("✅ Successfully loaded Instagram session.")
     except FileNotFoundError:
-        print(f"❌ Session file not found. Ensure 'session.txt' is in the project directory.")
+        print(f"❌ Session file not found in {os.getcwd()}. Ensure 'session.txt' is deployed.")
         exit(1)
     except Exception as e:
         print(f"⚠️ Failed to load session: {e}")
