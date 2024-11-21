@@ -1,5 +1,6 @@
 import os
 import time
+import base64
 import instaloader
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, CallbackContext
@@ -7,23 +8,35 @@ from telegram.ext import Updater, CommandHandler, CallbackContext
 # Initialize Instaloader
 insta_loader = instaloader.Instaloader()
 
-# Define Instagram username for session handling
-INSTAGRAM_USERNAME = "your_instagram_username"  # Replace with your username
+# Define Instagram username
+INSTAGRAM_USERNAME = "Contextdogs"  # Replace with your Instagram username
+
+def decode_session_file():
+    """Decode the Base64 session file back to its binary format."""
+    session_filename = f"session-{INSTAGRAM_USERNAME}"
+    try:
+        with open("session.txt", "r") as encoded_file:
+            encoded_data = encoded_file.read()
+        with open(session_filename, "wb") as session_file:
+            session_file.write(base64.b64decode(encoded_data))
+        print(f"✅ Decoded session file: {session_filename}")
+    except Exception as e:
+        print(f"⚠️ Failed to decode session file: {e}")
+        exit(1)
 
 def login_to_instagram():
-    """Log in to Instagram using a saved session if available."""
+    """Log in to Instagram using a saved session."""
+    decode_session_file()  # Decode session.txt to binary session file
     try:
-        # Attempt to load the session from the file
         insta_loader.load_session_from_file(INSTAGRAM_USERNAME)
         print("✅ Successfully loaded Instagram session.")
     except FileNotFoundError:
-        print("❌ No session file found. Please generate one using the `generate_session.py` script.")
+        print(f"❌ Session file not found. Please regenerate it using `generate_and_encode_session.py`.")
         exit(1)
     except Exception as e:
         print(f"⚠️ Failed to load session: {e}")
         exit(1)
 
-# Function to scrape videos by hashtag
 def scrape_videos(hashtag, limit=5):
     """Scrape up to 'limit' video URLs for a given hashtag."""
     videos = []
@@ -39,7 +52,6 @@ def scrape_videos(hashtag, limit=5):
         print(f"⚠️ Error while scraping videos: {e}")
     return videos
 
-# Telegram command handler
 def search_instagram(update: Update, context: CallbackContext):
     """Handles the /search command to fetch Instagram videos."""
     if not context.args:
@@ -67,15 +79,12 @@ def search_instagram(update: Update, context: CallbackContext):
 
     update.message.reply_text("🚀 All videos sent! Use /search <hashtag> to find more. 🌟")
 
-# Main function to run the Telegram bot
 def main():
     """Main function to run the Telegram bot."""
-    TELEGRAM_TOKEN = "your_telegram_bot_token"  # Replace with your bot token
+    TELEGRAM_TOKEN = "your_telegram_bot_token"  # Replace with your Telegram bot token
 
-    # Login to Instagram
-    login_to_instagram()
+    login_to_instagram()  # Login to Instagram
 
-    # Initialize the bot
     updater = Updater(TELEGRAM_TOKEN)
     dispatcher = updater.dispatcher
 
