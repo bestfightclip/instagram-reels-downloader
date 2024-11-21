@@ -55,53 +55,71 @@ def login_to_instagram():
         print(f"⚠️ Failed to load session: {e}")
         exit(1)
 
+async def scrape_by_keyword(keyword, limit=5):
+    """
+    Scrapes up to 'limit' Instagram videos with the given keyword in their captions.
+    """
+    videos = []
+    try:
+        # Scraping all posts in a random hashtag
+        for post in insta_loader.get_posts_by_hashtag("dog"):  # Searching in a general hashtag, like "dog"
+            if keyword.lower() in post.caption.lower() and post.is_video:
+                videos.append(post.video_url)
+                if len(videos) >= limit:
+                    break
+            time.sleep(2)  # Delay to prevent rate-limiting
+    except Exception as e:
+        print(f"⚠️ Error while scraping videos with keyword '{keyword}': {e}")
+    return videos
+
 async def scrape_videos(hashtag, limit=5):
     """
     Scrapes up to 'limit' video URLs from Instagram for a given hashtag.
     """
     videos = []
     try:
-        # Attempt to fetch posts for the hashtag
         hashtag_posts = instaloader.Hashtag.from_name(insta_loader.context, hashtag).get_posts()
-        
         for post in hashtag_posts:
             if post.is_video:
                 videos.append(post.video_url)
                 if len(videos) >= limit:
                     break
             time.sleep(2)  # Delay to prevent rate-limiting
-            
-    except instaloader.exceptions.QueryReturnedNotFoundException:
-        # Handle the 404 error when Instagram API doesn't return data for a hashtag
-        print(f"⚠️ Hashtag {hashtag} not found or blocked by Instagram.")
     except Exception as e:
         print(f"⚠️ Error while scraping videos for hashtag {hashtag}: {e}")
-    
     return videos
 
 async def search_instagram(update: Update, context: CallbackContext):
     """
-    Handles the /search command to fetch Instagram videos for a hashtag.
+    Handles the /search command to fetch Instagram videos for a hashtag or keyword.
     """
     if not context.args:
-        await update.message.reply_text("❓ Usage: /search <hashtag> [limit]\nExample: /search travel 5")
+        await update.message.reply_text("❓ Usage: /search <hashtag/keyword> [limit]\nExample: /search travel 5")
         return
 
-    hashtag = context.args[0]
+    query = context.args[0]  # Can be either a hashtag or a keyword
     limit = int(context.args[1]) if len(context.args) > 1 else 5
-    await update.message.reply_text(f"🔍 Searching Instagram for up to {limit} videos with **#{hashtag}**...\nPlease wait! ⏳")
 
-    videos = await scrape_videos(hashtag, limit)
+    # Check if the first argument starts with a hashtag
+    if query.startswith("#"):
+        # Search by hashtag
+        await update.message.reply_text(f"🔍 Searching Instagram for up to {limit} videos with **#{query}**...\nPlease wait! ⏳")
+        videos = await scrape_videos(query[1:], limit)  # Removing the '#' from the hashtag
+    else:
+        # Search by keyword in captions
+        await update.message.reply_text(f"🔍 Searching Instagram for up to {limit} videos with **{query}** in captions...\nPlease wait! ⏳")
+        videos = await scrape_by_keyword(query, limit)
+
     if not videos:
-        await update.message.reply_text(f"❌ No videos found for **#{hashtag}** or Instagram blocked access!")
+        await update.message.reply_text(f"❌ No videos found for **{query}** or Instagram blocked access!")
         return
 
-    await update.message.reply_text(f"✅ Found **{len(videos)} video(s)** for **#{hashtag}**. Preparing to send... 📦")
+    await update.message.reply_text(f"✅ Found **{len(videos)} video(s)** for **{query}**. Preparing to send... 📦")
 
     for i, video_url in enumerate(videos, start=1):
         try:
             await update.message.reply_text(f"📥 **Downloading video {i}...**")
-            await update.message.reply_video(video=video_url, caption=f"🎥 **Video {i} from #{hashtag}**")
+            await update.message.reply_video(video=video_url, caption=f"🎥 **Video {i} from {query}**")
             await update.message.reply_text(f"✅ **Video {i} sent successfully!** 🎉")
         except Exception as e:
             await update.message.reply_text(f"⚠️ Error sending video {i}: {e}")
@@ -112,13 +130,13 @@ async def help_command(update: Update, context: CallbackContext):
     """Handles the /help command."""
     await update.message.reply_text(
         "🆘 Here's a list of available commands:\n\n"
-        "/search <hashtag> [limit] - Find Instagram videos for a hashtag\n"
+        "/search <hashtag/keyword> [limit] - Find Instagram videos for a hashtag or keyword\n"
         "/help - Show this help message"
     )
 
 async def start_command(update: Update, context: CallbackContext):
     """Handles the /start command."""
-    await update.message.reply_text("👋 Welcome to the Instagram Video Scraper bot! Use /search <hashtag> to get started.")
+    await update.message.reply_text("👋 Welcome to the Instagram Video Scraper bot! Use /search <hashtag/keyword> to get started.")
 
 def main():
     """
